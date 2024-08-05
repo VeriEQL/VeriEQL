@@ -1,0 +1,65 @@
+problem_id,checked,disproved,unsupported,max_bound,max_bound_time
+literature_cos/disjointSelect,1,0,0,[3],250
+literature_cos/timesAndDiv,1,0,0,[23],76
+literature_cos/conjunctSelect,1,0,0,[7],421
+literature_cos/cex-benchmarks-CA7,0,1,0,[0],0
+literature_cos/cex-benchmarks-CA6,0,1,0,[0],0
+literature_cos/mutation-test-CA7,0,1,0,[0],0
+literature_cos/mutation-test-CA6,0,1,0,[0],0
+literature_cos/mutation-test-CA1,0,1,0,"[0, 0, 0, 0, 0, 1, 1]",107
+literature_cos/ex2sigmod92,0,1,0,"[1, 1]",101
+literature_cos/mutation-test-CA3,0,1,0,[0],0
+literature_cos/mutation-test-CA2,0,1,0,[0],0
+literature_cos/mutation-test-CA9,0,1,0,[0],0
+literature_cos/mutation-test-CA8,0,1,0,[0],0
+literature_cos/SelfJoin0,1,0,0,[2],144
+literature_cos/SelfJoin1,1,0,0,[2],142
+literature_cos/cex-benchmarks-CQ9,0,1,0,[0],0
+literature_cos/344Q2,0,0,1,[0],0
+literature_cos/mutation-test-CA4,0,1,0,[0],0
+literature_cos/index_sigmod82,0,1,0,"[1, 1]",103
+literature_cos/344Q1,1,0,0,"[2, 2]",143
+literature_cos/CQExample1,1,0,0,[3],428
+literature_cos/CQExample0,1,0,0,"[2, 2]",444
+literature_cos/pullsubquery,1,0,0,"[2, 1]",22
+literature_cos/cex-benchmarks-CA9,0,1,0,[0],0
+literature_cos/ex2sigmod92simpl,0,1,0,"[1, 1]",106
+literature_cos/inlineCorrelatedSubqueries,1,0,0,[6],257
+literature_cos/ex1sigmod92,0,1,0,"[1, 1, 1]",120
+literature_cos/cex-benchmarks-CA8,0,1,0,[0],0
+literature_cos/mutation-test-CQ10,0,1,0,[0],0
+literature_cos/countProject,1,0,0,[30],65
+literature_cos/pushdownSelect,1,0,0,"[2, 2]",253
+literature_cos/fkPennTR,0,1,0,"[1, 1, 1]",125
+literature_cos/mutation-test-CQ7,0,0,1,[0],0
+literature_cos/mutation-test-CQ1,0,1,0,[0],0
+literature_cos/unionEmpty,1,0,0,[23],83
+literature_cos/mutation-test-CQ3,0,1,0,[0],0
+literature_cos/cex-benchmarks-CQ10,0,1,0,[0],0
+literature_cos/ex3sigmod92,0,1,0,"[1, 1]",102
+literature_cos/mutation-test-CQ9,0,1,0,[0],0
+literature_cos/cex-benchmarks-cse344au_hw2_cse344au_hw2_q4_1,0,1,0,"[2, 1, 0, 0]",83
+literature_cos/aggOnExpr,1,0,0,[3],412
+literature_cos/ex2sigmod83,0,1,0,"[2, 1]",168
+literature_cos/havingToWhere,1,0,0,[4],311
+literature_cos/commutativeSelect,1,0,0,[7],341
+literature_cos/projectJoinTranspose,1,0,0,"[7, 7]",212
+literature_cos/productDistributesOverUnion,1,0,0,"[3, 2, 2]",349
+literature_cos/missing-pred,0,1,0,[1],101
+literature_cos/inline-exists,0,1,0,"[1, 1]",98
+literature_cos/cex-benchmarks-csep544_hw3_csep544_hw3_q1_2,0,1,0,"[2, 0, 0, 0]",273
+literature_cos/cex-benchmarks-csep544_hw3_csep544_hw3_q1_1,0,1,0,[0],0
+literature_cos/mutation-test-CA5,0,1,0,[0],0
+literature_cos/SelfJoin2,1,0,0,[2],171
+literature_cos/cex-benchmarks-CA1,0,1,0,[0],0
+literature_cos/projectionDistributesOverUnion,1,0,0,"[13, 13]",78
+literature_cos/joinCommute,1,0,0,"[3, 2]",264
+literature_cos/pushProj,1,0,0,"[7, 7]",180
+literature_cos/cex-benchmarks-CA4,0,1,0,[0],0
+literature_cos/344-exam-1,0,1,0,"[1, 1]",106
+literature_cos/countbug,0,1,0,"[1, 1]",115
+literature_cos/issue29,0,1,0,"[1, 1]",104
+literature_cos/cex-benchmarks-cse344au_hw2_csep544_hw2_q4_3,0,1,0,"[2, 1, 0, 0]",66
+literature_cos/idempotentSelect,1,0,0,[24],75
+literature_cos/string_ex1,0,1,0,[1],99
+literature_cos/inline-exists,0,1,0,"[1, 1]",98

@@ -1,0 +1,13 @@
+z3-solver
+mo-sql-parsing==8.205.22260
+ujson
+ordered_set
+lark
+tqdm
+pandas
+pyyaml
+prettytable
+mysql-connector-python
+matplotlib
+sphinx
+sphinx-rtd-theme
