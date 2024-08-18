@@ -155,11 +155,19 @@ When instantiate the `Environment` class, please
 If you use this tool in your research, please cite this project as follows,
 
 ```latex
-@article{he2024verieql,
-  title={VeriEQL: Bounded Equivalence Verification for Complex SQL Queries with Integrity Constraints},
-  author={He, Yang and Zhao, Pinhan and Wang, Xinyu and Wang, Yuepeng},
-  journal={Proceedings of the ACM on Programming Languages},
-  number={OOPSLA1},
-  year={2024},
+@article{DBLP:journals/pacmpl/HeZWW24,
+  author       = {Yang He and
+                  Pinhan Zhao and
+                  Xinyu Wang and
+                  Yuepeng Wang},
+  title        = {VeriEQL: Bounded Equivalence Verification for Complex {SQL} Queries
+                  with Integrity Constraints},
+  journal      = {Proc. {ACM} Program. Lang.},
+  volume       = {8},
+  number       = {{OOPSLA1}},
+  pages        = {1071--1099},
+  year         = {2024},
+  url          = {https://doi.org/10.1145/3649849},
+  doi          = {10.1145/3649849}
 }
 ```
