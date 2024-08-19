@@ -5,6 +5,7 @@ import itertools
 import operator as Operator
 import pprint
 import random
+from collections import defaultdict
 from time import time
 from typing import *
 
@@ -95,6 +96,7 @@ class Environment:
             self._script_writer = self.sql_code = None
         self.show_counterexample = show_counterexample
         self.counterexample = None
+        self.counterexample_dict = defaultdict(list) # for Demo frontend
         if semantics == 'bag':
             self.verifier = BagSemanticsVerifier(self)
             LOGGER.debug("Semantics: bag")
@@ -972,6 +974,11 @@ class Environment:
                                 if v != 'NULL':
                                     v = f"\'{utils.int_to_strptime(v)}\'"
                             values.append(v)
+
+                        self.counterexample_dict[basetable.name].append(
+                            dict(zip(self.sql_code['tables'][basetable.name].keys(), [str(v) for v in values]))
+                        )
+
                         values = f"INSERT INTO {basetable.name} VALUES ({', '.join(str(v) for v in values)});\n"
                         insert_rows.append(values)
                     attr_rows = f',\n\t'.join(
