@@ -858,7 +858,7 @@ class Encoder:
                 # expr = FValueTable(self.scope, expr)
                 try:
                     # correlated_subquery_ctx = self.analyze(copy(expr))
-                    correlated_subquery_ctx = self.analyze(expr, ctx=ctx)
+                    correlated_subquery_ctx = self.analyze(expr, outer_ctx=ctx)
                     referred_table = correlated_subquery_ctx.prev_database
                 except UnknownColumnError as uc_err:
                     raise CorrelatedQueryError(expr)
