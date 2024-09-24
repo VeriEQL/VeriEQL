@@ -20,25 +20,23 @@ A SQL pair refuted by VeriEQL.
 
 Python 3.10 or later. (Python 3.11 is recommended.)
 
-To install dependencies, run:
+1) To install dependencies, run:
 
 ```shell
 pip install -r requirements.txt
 ```
 
-and test your environment with the following command:
-```shell
-python -m test.test_env
-```
-
-### Acceleration
-
-Replacing z3 python scripts with [files](./z3py_libs) in your environments could save 10%~20% time in formulation.
+2) **Important**: Replacing z3 python scripts with [files](./z3py_libs) in your environments could save 10%~20% time in formulation.
 
 If you use conda, please refer to the following commands.
 
 ```shell
 sudo mv ./z3py_libs/*.py ~/anaconda3/envs/z3py311/lib/python3.11/site-packages/z3/
+```
+
+3) To test your environment with the following command:
+```shell
+python -m test.test_env
 ```
 
 ## 🔖 How to use
