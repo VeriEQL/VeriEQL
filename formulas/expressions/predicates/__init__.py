@@ -5,6 +5,7 @@ from .any_value_predicate import FAnyValuePredicate
 from .base_predicate import FBasePredicate
 from .case_predicate import FCasePredicate
 from .coalesce_predicate import FCoalescePredicate
+from .exists_predicate import FExistsPredicate
 from .first_value_predicate import FFirstValuePredicate
 from .if_predicate import FIfPredicate
 from .in_predicate import FInPredicate
@@ -23,7 +24,7 @@ from .power_predicate import FPowerPredicate
 
 PredicateType = FBasePredicate | \
                 FInPredicate | FNotInPredicate | FIsNullPredicate | FIsNotNullPredicate | FCasePredicate | \
-                FCoalescePredicate | FIfPredicate | FAbsPredicate | FPowerPredicate | \
+                FCoalescePredicate | FIfPredicate | FAbsPredicate | FPowerPredicate | FExistsPredicate | \
                 FAnyValuePredicate | FFirstValuePredicate | FLastValuePredicate | FModPredicate | \
                 FIsTruePredicate | FIsFalsePredicate | FIsNotTruePredicate | FIsNotFalsePredicate | \
                 FIsNullOrHoldPredicate | FNullIfPredicate
@@ -38,6 +39,7 @@ __all__ = [
     'FIfPredicate',
     'FAbsPredicate',
     'FPowerPredicate',
+    'FExistsPredicate',
     'FAnyValuePredicate',
     'FFirstValuePredicate',
     'FLastValuePredicate',

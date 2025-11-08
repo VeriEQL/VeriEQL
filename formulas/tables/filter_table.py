@@ -39,12 +39,13 @@ class FFilterTable(FBaseTable):
                  scope,
                  table: FBaseTable,
                  condition: PredicateType | list,
+                 is_correlated_subquery: bool = False,
                  name: str = None,
                  ):
         tuples = _filter(scope, table, condition)
         if name is None:
             name = scope._get_new_databases_name()
-        super(FFilterTable, self).__init__(tuples, name)
+        super(FFilterTable, self).__init__(tuples, name, is_correlated_subquery)
         scope.register_database(name, self)
         self.fathers = [table]
         self.root = table.root or table.name

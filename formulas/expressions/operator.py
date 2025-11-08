@@ -76,6 +76,7 @@ _OPERATOR_DICT = {
     'coalesce': _Operator(abbr='coalesce', console='COALESCE', value=None),
     'cast': _Operator(abbr='cast', console='CAST', value=None),
     'digit': _Operator(abbr='digit', console='Digits_', value=None),
+    'exists': _Operator(abbr='exists', console='EXISTS_', value=None),
 
     'eq!': _Operator(abbr='eq!', console='IS_DISTINCT_FROM', value=None),
     'ne!': _Operator(abbr='ne!', console='IS_NOT_DISTINCT_FROM', value=None),

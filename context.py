@@ -43,6 +43,7 @@ class Context(object):
         self.groupby_ctx = None
         self.clear_clauses()
         self.right_outer_table = False
+        self.is_correlated_subquery = False
 
     def clear_clauses(self):
         self.with_clause = None

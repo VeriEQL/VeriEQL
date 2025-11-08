@@ -1,6 +1,16 @@
 VeriEQL
 =======
 
+-----------------------
+
+# ⚠️ Warning
+
+**The `dev` branch is under development for new features. It has not been thoroughly tested, and therefore its soundness cannot be guaranteed.
+<br>
+For production use, we recommend using the code at https://github.com/VeriEQL/VeriEQL/tags.**
+
+-----------------------
+
 ## 📝 Introduction
 
 VeriEQL is an equivalence verifier for complex SQL queries with integrity constraints using bounded model checking, and
@@ -11,17 +21,6 @@ reachs the S.O.T.A. performance over three benchmarks.
 A SQL pair refuted by VeriEQL.
 
 ![An example checked by VeriEQL.](__figures__/example.png)
-
-## 🐳️ Docker
-
-If you use our Docker image, please skip 🛠️ `Installation`.
-
-```shell
-docker build -t verieql .
-docker run -it --name verieql verieql:latest /bin/zsh
-conda activate VeriEQL
-```
-
 
 ## 🛠️ Installation
 
@@ -62,22 +61,11 @@ python -m __main__
 
 ```shell
 # 10-min timeout
-python -m parallel.cli_within_timeout -f XX.jsonlines -t 600 -o XX.out
+python -m parallel.run_with_max_timeout -f benchmarks/leetcode/leetcode.jsonlines -t 600 -o benchmarks/leetcode/leetcode.out
 
 # 10 bound size
-python -m parallel.cli_within_bound -f XX.jsonlines -s 10 -o XX.out
+python -m parallel.run_with_max_bound -f benchmarks/leetcode/leetcode.jsonlines -s 10 -o benchmarks/leetcode/leetcode.out
 ```
-
-3) Reproduce our experimental results in parallel.
-```shell
-# leetcode
-python -m parallel.cli_within_timeout -f benchmarks/leetcode/leetcode.jsonlines -t 600 -o benchmarks/leetcode/leetcode.out
-# calcite
-python -m parallel.cli_within_timeout -f benchmarks/calcite/calcite2.jsonlines -t 600 -o benchmarks/calcite/calcite2.out
-# literature
-python -m parallel.cli_within_timeout -f benchmarks/literature/literature-rewrite.jsonlines -t 600 -o benchmarks/literature/literature-rewrite.out
-```
-
 
 ## ➕ Supported Features
 
@@ -96,16 +84,11 @@ python -m parallel.cli_within_timeout -f benchmarks/literature/literature-rewrit
 
 ### Benchmarks
 
-1) [Calcite](./benchmarks/calcite/calcite2.jsonlines): 397 pairs
+1) [Calcite](./benchmarks/calcite2): 397 pairs
 
-2) [Literature](./benchmarks/literature/literature-rewrite.jsonlines): 64 pairs
+2) [Literature](./benchmarks/literature): 64 pairs
 
-3) [LeetCode](./benchmarks/leetcode/leetcode.jsonlines): 23,224 pairs
-
-Updates: 
-- add unsupported constraints for Question `603`, `607` and `1132` of LeetCode benchmarks.
-- update error info for these 3 questions at `experiments/2025_10_31`.
-- upload `benchmarks/literature/literature-rewrite.jsonlines` which is simplified by rewriting correlated subqueries. VeriEQL was evaluated on this file.
+3) [LeetCode](./benchmarks/leetcode): 23,224 pairs
 
 ### Baselines
 

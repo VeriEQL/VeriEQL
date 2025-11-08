@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+from copy import deepcopy
 from typing import Sequence
 
 from formulas import register_formula
@@ -11,11 +12,13 @@ class FBaseTable(BaseFormula):
     def __init__(self,
                  tuples: Sequence,
                  name: str,
+                 is_correlated_subquery: bool = False,
                  ):
         self.tuples = tuples or []
         self.name = name
         self.fathers = None
         self.root = self.name
+        self.is_correlated_subquery = is_correlated_subquery
 
     def __getitem__(self, idx):
         return self.tuples[idx]
@@ -55,3 +58,11 @@ class FBaseTable(BaseFormula):
     def clear_alias_info(self):
         for attr in self.attributes:
             attr._sugar_full_name = attr._sugar_name = None
+
+    def detach(self, scope, postfix):
+        out = deepcopy(self)
+        out.name = f"{out.name}_{postfix}"
+        for idx, tuple in enumerate(out.tuples):
+            tuple.name = f"{tuple.name}_{postfix}"
+            tuple.SORT = scope._declare_tuple_sort(tuple.name)
+        return out

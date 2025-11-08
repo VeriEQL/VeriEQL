@@ -55,8 +55,8 @@ from utils import (
     encode_concate_by_and,
     encode_concate_by_or,
     is_uninterpreted_func,
-    CodeSnippet,
     __pos_hash__,
+    CodeSnippet
 )
 from visitors import visitor
 from visitors.dump_tuple import DumpTuple
@@ -70,9 +70,10 @@ class Visitor:
     def __init__(self, scope):
         self.scope = scope
         self._DEL = scope.DELETED_FUNCTION
+        self.correlated_table_indices = {}
 
     @visitor(FExpression)
-    def visit(self, formulas: FExpression, **kwargs):
+    def visit(self, formulas: FExpression, **outer_kwargs):
 
         def _f(*args, **kwargs):
             def _application(formulas):
@@ -88,17 +89,17 @@ class Visitor:
                             param = kwargs['first_non_deleted_tuple_sort']
                         elif isinstance(param, Sequence):
                             param = param[0]
-                        attr_tuple = self.visit(operand)(param, **kwargs)
+                        attr_tuple = self.visit(operand, **outer_kwargs)(param, **kwargs)
                         operands.append(FExpressionTuple(attr_tuple.NULL, attr_tuple.VALUE))
                     elif getattr(operand, 'require_tuples', False):
-                        operands.append(self.visit(operand)(param, **kwargs))
+                        operands.append(self.visit(operand, **outer_kwargs)(param, **kwargs))
                     # elif isinstance(operand, FSymbolicFunc):
                     #     operands.append(self.visit(operand))
                     # AGE - (AGE - 1)
                     elif isinstance(operand, FExpression | FExpressionTuple):
-                        operands.append(self.visit(operand)(*args, **kwargs))
+                        operands.append(self.visit(operand, **outer_kwargs)(*args, **kwargs))
                     elif isinstance(operand, FDigits | FNull):
-                        operands.append(self.visit(operand)(None))
+                        operands.append(self.visit(operand, **outer_kwargs)(None))
                     elif isinstance(operand, FBaseTable):
                         operands.append(self._table_to_value(operand, **kwargs))
                     else:
@@ -566,7 +567,12 @@ And(
 
     @visitor(FFilterTable)
     def visit(self, formulas: FFilterTable, **kwargs) -> Dict:
-        prev_table = self.visit(formulas.fathers[0])
+        prev_table = self.visit(formulas.fathers[0], **kwargs)
+
+        # TODO: handle correlated subquery
+        if formulas.is_correlated_subquery:
+            prev_outer_attrs = kwargs.get('outer_attrs', {})
+            formulas = self.detach_tuples(formulas)
 
         curr_table = {}
         for prev_tuple, curr_tuple in zip(prev_table.values(), formulas):
@@ -577,7 +583,14 @@ And(
                 if isinstance(formulas.fathers[0], FOuterJoinBaseTable) and curr_tuple.condition is None:
                     premise.append(simplify([self._DEL(t) for t in curr_tuple._mutex], operator=And))
                 else:
-                    filer_cond = self.visit(curr_tuple.condition)(prev_tuple.SORT)
+                    # update outer_attrs for WHERE clause which might be nested in a correlated subquery
+                    if formulas.is_correlated_subquery:
+                        outer_attrs = {k: v for k, v in prev_outer_attrs.items()}
+                        for attr in formulas.attributes:
+                            outer_attrs[str(attr)] = self.visit(attr)(prev_tuple.SORT)
+                        kwargs['outer_attrs'] = outer_attrs
+
+                    filer_cond = self.visit(curr_tuple.condition, **kwargs)(prev_tuple.SORT)
                     if is_int(filer_cond.VALUE):
                         filer_cond.VALUE = BoolVal(not Z3_EQ(filer_cond.VALUE, Z3_0))
                     if is_true(filer_cond.NULL):
@@ -709,6 +722,11 @@ Implies(Not({premise}), {self._DEL(curr_sort)}),
     @visitor(FProjectionTable)
     def visit(self, formulas: FProjectionTable, **kwargs) -> Dict:
         prev_table = self.visit(formulas.fathers[0])
+        if formulas.is_correlated_subquery:
+            formulas = self.detach_tuples(formulas)
+        elif not formulas.is_correlated_subquery and formulas.fathers[0].is_correlated_subquery:
+            # attach correlated subquery's tuples to projection
+            prev_table = self.attach_tuples(prev_table)
         curr_table = {}
 
         def _mapping_func(curr_tuple_sort, curr_attributes):
@@ -900,12 +918,14 @@ Not({self._DEL(curr_tuple_sort)}),
 
     @visitor(FFakeProjectionTable)
     def visit(self, formulas: FFakeProjectionTable, **kwargs) -> Dict:
-        prev_table = self.visit(formulas.fathers[0])
+        prev_table = self.visit(formulas.fathers[0], **kwargs)
+        if formulas.is_correlated_subquery:
+            formulas = self.detach_tuples(formulas)
         curr_table = {}
-        for curr_tuple, prev_tuple in zip(formulas, formulas.fathers[0]):
+        for curr_tuple, prev_tuple in zip(formulas, prev_table.values()):
             curr_tuple = DumpTuple(
                 name=curr_tuple.name, sort=prev_tuple.SORT, attributes=curr_tuple.attributes,
-                parent_sorts=prev_table[curr_tuple.fathers[0]],
+                parent_sorts=prev_tuple.kwargs.get('parent_sorts', None),
             )
             self.scope.register_dump_tuple(curr_tuple.name, curr_tuple)
             curr_table[curr_tuple.name] = curr_tuple
@@ -1096,6 +1116,11 @@ And(
 
     @visitor(FGroupByMapTable)
     def visit(self, formulas: FGroupByMapTable, **kwargs) -> Dict:
+        prev_table = self.visit(formulas.fathers[0])
+        if not formulas.is_correlated_subquery and formulas.fathers[0].is_correlated_subquery:
+            # attach correlated subquery's tuples to projection
+            prev_table = self.attach_tuples(prev_table)
+
         """
         Example:
             (t10, t11, t12) -> t16
@@ -1109,15 +1134,16 @@ And(
         # sum group(?, t_j) = Del(t_j)
         constraint = []
         i = 0
-        t_0 = formulas.fathers[0][i].SORT
+        prev_tuples = list(prev_table.values())
+        t_0 = prev_tuples[i].SORT
         constraint.append(
             formulas.group_function(t_0, IntVal(str(i))) == If(self._DEL(t_0), Z3_0, Z3_1)
         )
         values = [
             [self.visit(key)(t.SORT) for key in keys]
-            for t, keys in zip(formulas.fathers[0], formulas.keys)
+            for t, keys in zip(prev_tuples, formulas.keys)
         ]
-        for j, curr_tuple in enumerate(formulas.fathers[0][1:], start=1):
+        for j, curr_tuple in enumerate(prev_tuples[1:], start=1):
             constraint.append(
                 Sum(*[formulas.group_function(curr_tuple.SORT, IntVal(str(group_idx))) for group_idx in
                       range(j + 1)]) == \
@@ -1136,12 +1162,11 @@ And(
                 constraint.append(
                     formulas.group_function(curr_tuple.SORT, z3_group_index) == And(
                         Not(self._DEL(curr_tuple.SORT)),
-                        formulas.group_function(formulas.fathers[0][group_idx].SORT, z3_group_index),
+                        formulas.group_function(prev_tuples[group_idx].SORT, z3_group_index),
                         value_equality,
                     )
                 )
 
-        prev_table = self.visit(formulas.fathers[0])
         curr_table = {}
         for idx, curr_tuple in enumerate(formulas):
             if self.scope.is_register_dump_tuple(curr_tuple.name):
@@ -1336,6 +1361,9 @@ And(
     @visitor(FOrderByTable)
     def visit(self, formulas: FOrderByTable, **kwargs) -> Dict:
         prev_table = self.visit(formulas.fathers[0])
+        if not formulas.is_correlated_subquery and formulas.fathers[0].is_correlated_subquery:
+            # attach correlated subquery's tuples to projection
+            prev_table = self.attach_tuples(prev_table)
         constraint = []  # generate constraint over those Map tuples
 
         # 1) move DELETED tuples to the table end
@@ -1744,6 +1772,8 @@ And(
                         src_attr_tuple = self.visit(src_attr)(args, **kwargs)
                 src_attr_tuples.append(src_attr_tuple)
 
+            # register outer attributes for correlated subquery
+
             prev_table = self.visit(formulas.operands[1])
             all_del_formula = And(*[self._DEL(prev_tuple.SORT) for prev_tuple in prev_table.values()])
             null_exist_formula = Or(*[src_attr_tuple.NULL for src_attr_tuple in src_attr_tuples])
@@ -1788,7 +1818,7 @@ And(
         return _f
 
     @visitor(FInPredicate)
-    def visit(self, formulas: FInPredicate, **kwargs):
+    def visit(self, formulas: FInPredicate, **outer_kwargs):
         # I. `(a, b) IN ((A1, B1), (A2, B2))`
         # [(0,1) (0,0) (1, NULL)] IN [(0,1) (0,0)] => [True, True, False]
         # [(0,1) (0,0) (NULL, NULL)] IN [(0,1) (0,0)] => [True, True, NULL]
@@ -1819,10 +1849,9 @@ And(
                         src_attr_tuple = self.visit(src_attr)(args, **kwargs)
                 src_attr_tuples.append(src_attr_tuple)
 
-            prev_table = self.visit(formulas.operands[1])
+            prev_table = self.visit(formulas.operands[1], **outer_kwargs)
             all_del_formula = And(*[self._DEL(prev_tuple.SORT) for prev_tuple in prev_table.values()])
             null_exist_formula = Or(*[src_attr_tuple.NULL for src_attr_tuple in src_attr_tuples])
-            # null_exist_formula = And(*[src_attr_tuple.NULL for src_attr_tuple in src_attr_tuples])
             in_formula = []
             null_list = []
             for prev_tuple in prev_table.values():
@@ -1837,8 +1866,6 @@ And(
                                         dst_attr_tuple.VALUE)
                         ], operator=And)
                     )
-                    # pair_are_null.append(And(Not(self._DEL(prev_tuple.SORT)), dst_attr_tuple.NULL))
-                    # null_list.append(simplify(pair_are_null, operator=And))
                     null_list.append(And(Not(self._DEL(prev_tuple.SORT)), dst_attr_tuple.NULL))
                 in_formula.append(simplify(tmp, operator=And))
             in_formula = Or(*in_formula)
@@ -1856,6 +1883,27 @@ And(
                     Not(all_del_formula),
                     And(in_formula, Not(null_exist_formula)),
                 ),
+            )
+
+        return _f
+
+    @visitor(FExistsPredicate)
+    def visit(self, formulas: FExistsPredicate, **outer_kwargs):
+
+        def _f(*args, **kwargs):
+            outer_attrs = outer_kwargs.get('outer_attrs', {})
+            t_sort = args[0]
+            for attr in self.scope.dump_tuples[str(t_sort)].attributes:
+                outer_attrs[str(attr)] = self.visit(attr, **outer_kwargs)(t_sort)
+            outer_kwargs['outer_attrs'] = outer_attrs
+            out = []
+            prev_table = self.visit(formulas[0], **outer_kwargs)
+            # print(prev_table)
+            for prev_tuple in prev_table.values():
+                out.append(Not(self._DEL(prev_tuple.SORT)))
+            return FExpressionTuple(
+                NULL=Z3_FALSE,
+                VALUE=Or(*out) if len(out) > 1 else out[0],
             )
 
         return _f
@@ -2143,19 +2191,22 @@ And(
 
     @functools.lru_cache()
     @visitor(FAttribute)
-    def visit(self, formulas: FAttribute, **kwargs):
+    def visit(self, formulas: FAttribute, **outer_kwargs):
         def _f(args, **kwargs):
             if 'first_non_deleted_tuple_sort' in kwargs:
                 args = kwargs['first_non_deleted_tuple_sort']
             if isinstance(args, tuple | list):
                 args = args[0]
-            NULL = formulas.NULL(args)
-            if kwargs.get('pity_flag', False):
-                NULL = Or(NULL, self._DEL(args))
-            return FExpressionTuple(
-                NULL=NULL,
-                VALUE=formulas.VALUE(args),
-            )
+            if str(formulas) in outer_kwargs.get('outer_attrs', {}):
+                return outer_kwargs['outer_attrs'][str(formulas)]
+            else:
+                NULL = formulas.NULL(args)
+                if kwargs.get('pity_flag', False):
+                    NULL = Or(NULL, self._DEL(args))
+                return FExpressionTuple(
+                    NULL=NULL,
+                    VALUE=formulas.VALUE(args),
+                )
 
         return _f
 
@@ -2195,7 +2246,9 @@ And(
 
     @visitor(FBaseTuple)
     def visit(self, formulas: FBaseTuple, **kwargs):
-        return DumpTuple(name=formulas.name, sort=formulas.SORT, attributes=formulas.attributes)
+        dum_tuple = DumpTuple(name=formulas.name, sort=formulas.SORT, attributes=formulas.attributes)
+        self.scope.register_dump_tuple(dum_tuple.name, dum_tuple)
+        return dum_tuple
 
     @visitor(FValueTable)
     def visit(self, formulas: FValueTable, **kwargs):
@@ -2241,7 +2294,7 @@ And(
         return _f
 
     @visitor(FExpressionTuple)
-    def visit(self, formulas: FExpressionTuple, *kwargs):
+    def visit(self, formulas: FExpressionTuple, **kwargs):
         def _f(*args, **kwargs):
             return formulas
 
@@ -2366,3 +2419,22 @@ And(
             )
 
         return _f
+
+    def detach_tuples(self, formulas):
+        # only works for correlated subquery
+        # e.g., WHERE s.CUSTOMERKEY IN (SELECT CustomerKey FROM CUSTOMER WHERE (CustomerKey != s.CUSTOMERKEY))
+        # need to rename tuples of the table `SELECT CustomerKey FROM CUSTOMER WHERE (CustomerKey != s.CUSTOMERKEY)`
+        old_name = formulas.name.rsplit('_', 1)[0]
+        formulas = formulas.detach(self.scope, self.correlated_table_indices.get(old_name, 0))
+        self.correlated_table_indices[old_name] = self.correlated_table_indices.get(old_name, 0) + 1
+        return formulas
+
+    def attach_tuples(self, detached_table):
+        # attach tuples of correlated subquery into outer query
+        # attached_table = {}
+        # for key, value in detached_table.items():
+        #     name = key.rsplit('_')[0]
+        #     value.name = name
+        #     attached_table[name] = value
+        attached_table = {key.rsplit('_')[0]: value for key, value in detached_table.items()}
+        return attached_table
