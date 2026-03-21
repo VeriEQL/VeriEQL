@@ -4,6 +4,7 @@ from typing import Sequence
 
 from formulas import register_formula
 from formulas.tables.base_table import FBaseTable
+from formulas.tables.limit_table import FLimitTable
 from formulas.tables.order_by_table import FOrderByTable
 from formulas.tuples.projection_pity_tuple import FProjectionPityTuple
 from formulas.tuples.projection_tuple import FProjectionTuple
