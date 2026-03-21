@@ -696,12 +696,11 @@ class Encoder:
                 with_databases = {name: ctx.databases[name] for name in ctx.with_clause}
             if self._is_alias(from_clause):
                 if from_clause.get('value', None) == from_clause.get('name', None):
-                    table = self.analyze(from_clause['value'], with_databases=with_databases,
-                                         skip_orderby=True).prev_database
+                    table = self.analyze(from_clause['value'], with_databases=with_databases).prev_database
                 else:
                     # src_name, dst_name = from_clause.pop('value'), from_clause.pop('name')
                     src_name, dst_name = from_clause['value'], from_clause['name']
-                    src_table = self.analyze(src_name, with_databases=with_databases, skip_orderby=True).prev_database
+                    src_table = self.analyze(src_name, with_databases=with_databases).prev_database
                     if isinstance(dst_name, dict):
                         dst_table_name = list(dst_name)[0]
                         dst_attributes = dst_name[dst_table_name]
@@ -713,7 +712,7 @@ class Encoder:
                     condition = self._get_alias_condition(src_table.attributes, dst_table_name, dst_attributes)
                     table = FAliasTable(self.scope, src_table, condition=condition, name=dst_table_name)
             else:
-                table = self.analyze(from_clause, with_databases=with_databases, skip_orderby=True).prev_database
+                table = self.analyze(from_clause, with_databases=with_databases).prev_database
         elif isinstance(from_clause, ValuesTable):
             table = self.parse_values_table(from_clause, ctx)
         else:
