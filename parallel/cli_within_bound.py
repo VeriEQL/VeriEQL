@@ -20,7 +20,7 @@ from utils import (
     divide,
 )
 
-parser = argparse.ArgumentParser(description='DBChecker cli')
+parser = argparse.ArgumentParser(description='VeriEQL cli')
 parser.add_argument('-f', '--file', type=str)
 parser.add_argument('-s', '--bound_size', type=int, default=10)
 parser.add_argument('-t', '--timeout', type=int, default=TIMEOUT)
